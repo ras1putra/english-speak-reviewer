@@ -1,0 +1,66 @@
+[project]
+name = "worker-py"
+version = "0.1.0"
+description = "AI Worker for English Speak Reviewer"
+readme = "README.md"
+requires-python = ">=3.12"
+
+dependencies = [
+    "redis>=5.1.0",
+    "python-dotenv>=1.0.1",
+    "psutil>=5.9.8",
+    "numpy>=1.26.4",
+    "transformers>=4.45.0",
+    "librosa>=0.10.2.post1",
+    "minio>=7.2.7",
+    "psycopg[binary]>=3.2.1",
+    "pandas>=2.2.0",
+    "torch",
+    "torchaudio",
+    "whisperx",
+    "faster-whisper>=1.2.1",
+    "google-genai>=1.56.0",
+]
+
+[dependency-groups]
+dev = [
+    "watchdog[watchmedo]>=6.0.0",
+    # Testing
+    "pytest-cov>=7.0.0",
+    "pytest>=8.3.0",
+    # Linters
+    "isort>=7.0.0",
+    "ruff>=0.14.10",
+    "pylint>=4.0.4",
+    "flake8>=7.3.0",
+    "black>=24.8.0",
+    # Type Checkers
+    "mypy>=1.19.1",
+    # Security
+    "bandit>=1.9.2",
+    "pre-commit>=4.5.1",
+]
+
+[tool.uv]
+index-url = "https://pypi.org/simple"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchaudio = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = [
+  "whisperx",
+  "faster_whisper",
+  "psutil"
+]
+ignore_missing_imports = true

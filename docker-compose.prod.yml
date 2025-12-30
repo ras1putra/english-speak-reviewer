@@ -1,0 +1,107 @@
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    env_file:
+      - ./.env
+    networks:
+      - app-net
+    depends_on:
+      - db
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    restart: always
+    networks:
+      - app-net
+    env_file:
+      - ./.env
+    ports:
+      - "${APP_PORT:-8888}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio:
+        condition: service_started
+      redis:
+        condition: service_started
+      db:
+        condition: service_started
+
+  worker:
+    build:
+      context: ./worker-py
+      dockerfile: Dockerfile
+      target: ${WORKER_PROD_TARGET:-cpu-prod}
+    restart: always
+    networks:
+      - app-net
+    env_file:
+      - ./.env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio:
+        condition: service_started
+      redis:
+        condition: service_started
+      db:
+        condition: service_started
+    volumes:
+      - models_cache:/root/.cache/huggingface
+      - worker_py_venv:/app/.venv
+    # gpus: all
+
+  minio:
+    image: minio/minio
+    restart: always
+    networks:
+      - app-net
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+
+  redis:
+    image: redis:alpine
+    restart: always
+    networks:
+      - app-net
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  db:
+    image: postgres:17-alpine
+    restart: always
+    networks:
+      - app-net
+    ports:
+      - "54321:5432"
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  minio_data:
+  redis_data:
+  postgres_data:
+  models_cache:
+  worker_py_venv:
+
+networks:
+  app-net:
+    driver: bridge
