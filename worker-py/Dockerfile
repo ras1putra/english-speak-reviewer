@@ -48,7 +48,7 @@ FROM cpu-base AS cpu-dev
 ENV PYTHONUNBUFFERED=1
 ENV ENV=development
 ENV WORKER_DEVICE_MODE=cpu
-RUN uv sync --frozen --no-install-project --group dev
+RUN uv sync --frozen --group dev
 COPY . .
 CMD ["uv", "run", "watchmedo", "auto-restart", \
      "--directory=.", \
@@ -60,7 +60,7 @@ CMD ["uv", "run", "watchmedo", "auto-restart", \
 # CPU Production
 FROM cpu-base AS cpu-prod
 ENV WORKER_DEVICE_MODE=cpu
-RUN uv sync --frozen
+RUN uv sync --frozen --no-dev
 COPY . .
 CMD ["uv", "run", "main.py"]
 
@@ -69,7 +69,7 @@ FROM gpu-base AS gpu-dev
 ENV PYTHONUNBUFFERED=1
 ENV ENV=development
 ENV WORKER_DEVICE_MODE=gpu
-RUN uv sync --frozen --no-install-project --group dev
+RUN uv sync --frozen --group dev
 RUN uv pip install --force-reinstall torch torchaudio \
     --index-url https://download.pytorch.org/whl/cu124
 COPY . .
@@ -83,7 +83,7 @@ CMD ["uv", "run", "watchmedo", "auto-restart", \
 # GPU Production
 FROM gpu-base AS gpu-prod
 ENV WORKER_DEVICE_MODE=gpu
-RUN uv sync --frozen
+RUN uv sync --frozen --no-dev
 RUN uv pip install --force-reinstall torch torchaudio \
     --index-url https://download.pytorch.org/whl/cu124
 COPY . .
